@@ -15,11 +15,20 @@ this prototype deliberately does not attempt.
 
 ## What to do with it
 
-The bottom bar (or `←` / `→`) cycles the four variants. The headline comparison is **what
-angle encodes**:
+The bottom bar (or `←` / `→`) cycles the **three arrangements** on the table:
 
-- **Angle = Train of Thought** — 125 bearings, longest arm 17 Thoughts.
-- **Angle = Topic** — 22 bearings, longest arm 193 Thoughts.
+1. **Trains own the bearing** — contemporaries are co-located. 125 bearings, longest arm 17.
+2. **Topics own the bearing, Trains deleted** — 22 bearings, longest arm 193.
+3. **Topics own the bearing, Trains as a lens** — Trains are recorded but never drawn;
+   hovering summons a Thought's contemporaries on demand.
+
+Dimensionality is a *separate* control, because it is a consequence of the angle choice
+rather than a peer of it: Topic plateaus in the tens of bearings and 2D suffices forever,
+while Train grows without bound and needs 3D within a few years.
+
+The third arrangement is the one to watch. It costs no permanent channel and works under
+either encoding — but a lens is worse than co-location for *noticing*: you find the
+contemporaries you went looking for, not the ones you stumble across.
 
 Drag to rotate, scroll to zoom, hover for content. **Timed retrieval** is bottom-left: hit
 *Start trial*, find the named Thought, click it. It logs median time per condition. Task

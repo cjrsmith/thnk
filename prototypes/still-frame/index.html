@@ -35,7 +35,7 @@
   #bar button{background:#1b2130;border:1px solid var(--line);color:var(--ink);
     width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px;line-height:1}
   #bar button:hover{border-color:var(--accent)}
-  #bar .name{padding:0 12px;font-size:12px;font-weight:600;min-width:210px;text-align:center}
+  #bar .name{padding:0 12px;font-size:12px;font-weight:600;min-width:330px;text-align:center}
   #bar .name span{color:var(--dim);font-weight:400}
   #trial{bottom:16px;left:16px;padding:12px 14px;width:310px}
   #trial h2{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim)}
@@ -292,11 +292,17 @@ const TCOL = new Map(TOPICS.map((t, i) => {
 }));
 
 const P = { angleBy:'train', dim:3, rMinRatio:8, gapHours:4, profile:'even', labels:26, wear:'off', spines:'implied', trainLinks:'off' };
+// The three arrangements actually on the table. Dimensionality is a separate
+// control, because it is a consequence of the angle choice rather than a peer
+// of it: Topic plateaus in the tens of bearings and 2D suffices forever;
+// Train grows without bound and needs 3D within a few years.
 const VARIANTS = [
-  { angleBy:'train', dim:3, name:'Angle = Train',  sub:'3D sphere' },
-  { angleBy:'topic', dim:3, name:'Angle = Topic',  sub:'3D sphere' },
-  { angleBy:'train', dim:2, name:'Angle = Train',  sub:'2D disc — flat control' },
-  { angleBy:'topic', dim:2, name:'Angle = Topic',  sub:'2D disc — flat control' },
+  { angleBy:'train', links:'off',
+    name:'Trains own the bearing', sub:'contemporaries co-located' },
+  { angleBy:'topic', links:'off',
+    name:'Topics own the bearing', sub:'Trains deleted' },
+  { angleBy:'topic', links:'on',
+    name:'Topics own the bearing', sub:'Trains as a lens, summoned on hover' },
 ];
 let vi = 0;
 
@@ -542,8 +548,8 @@ function syncSeg() {
   for (const [id, key] of [['seg-angle','angleBy'],['seg-dim','dim'],['seg-prof','profile'],['seg-wear','wear'],['seg-spine','spines'],['seg-links','trainLinks']])
     for (const b of document.getElementById(id).children)
       b.classList.toggle('on', String(P[key]) === b.dataset.v);
-  document.getElementById('vname').innerHTML =
-    `Angle = ${P.angleBy === 'train' ? 'Train' : 'Topic'} <span>· ${P.dim === 3 ? '3D sphere' : '2D disc'}</span>`;
+  const v = VARIANTS[vi];
+  document.getElementById('vname').innerHTML = `${v.name} <span>· ${v.sub}</span>`;
 }
 seg('seg-angle','angleBy'); seg('seg-dim','dim',Number); seg('seg-prof','profile');
 seg('seg-wear','wear'); seg('seg-spine','spines'); seg('seg-links','trainLinks');
@@ -559,8 +565,8 @@ rng('i-gap','gapHours','v-gap', v => v + 'h');
 rng('i-lab','labels','v-lab', v => String(v));
 
 function applyVariant() {
-  const v = VARIANTS[vi]; P.angleBy = v.angleBy; P.dim = v.dim;
-  if (P.dim === 2) pitch = 1.2;
+  const v = VARIANTS[vi];
+  P.angleBy = v.angleBy; P.trainLinks = v.links;
   syncSeg(); build();
 }
 document.getElementById('prev').onclick = () => { vi = (vi + VARIANTS.length - 1) % VARIANTS.length; applyVariant(); };
