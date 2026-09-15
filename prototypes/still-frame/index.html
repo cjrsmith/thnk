@@ -107,6 +107,11 @@
     <button data-v="implied">Implied</button><button data-v="origin">From the Self</button>
   </div></div>
 
+  <h2>On hover</h2>
+  <div class="row"><div class="seg" id="seg-links">
+    <button data-v="off">Nothing</button><button data-v="on">Link Train-mates</button>
+  </div></div>
+
   <h2>Legibility</h2>
   <div class="row">
     <label>Labels shown <b id="v-lab"></b></label>
@@ -174,6 +179,11 @@ function attention(key, profile) {
  * @returns {{points:Array, arms:Array, stats:Object}}
  */
 function layout(thoughts, p) {
+  // Train membership is computed regardless of what angle encodes, so the
+  // cost of NOT giving Trains the angular channel can be seen directly:
+  // hovering shows a Thought's Train-mates wherever they ended up.
+  const trainOf = clusterTrains(thoughts, p.gapHours).assign;
+
   const { assign, count } = p.angleBy === 'train'
     ? clusterTrains(thoughts, p.gapHours)
     : (() => {
@@ -221,7 +231,7 @@ function layout(thoughts, p) {
       const r = Math.min(R, base + j * step);
       lo = Math.min(lo, r); hi = Math.max(hi, r);
       points.push({
-        i, arm: a, r,
+        i, arm: a, r, train: trainOf[i],
         x: d[0] * r, y: d[1] * r, z: d[2] * r,
         topic: thoughts[i].topic,
         age: 1 - (thoughts[i].t - tMin) / tSpan,   // 1 = oldest
@@ -281,7 +291,7 @@ const TCOL = new Map(TOPICS.map((t, i) => {
   return [t, { h, css: `hsl(${h} 72% 62%)` }];
 }));
 
-const P = { angleBy:'train', dim:3, rMinRatio:8, gapHours:4, profile:'even', labels:26, wear:'off', spines:'implied' };
+const P = { angleBy:'train', dim:3, rMinRatio:8, gapHours:4, profile:'even', labels:26, wear:'off', spines:'implied', trainLinks:'off' };
 const VARIANTS = [
   { angleBy:'train', dim:3, name:'Angle = Train',  sub:'3D sphere' },
   { angleBy:'topic', dim:3, name:'Angle = Topic',  sub:'3D sphere' },
@@ -395,6 +405,31 @@ function draw() {
   }
   cx.globalAlpha = 1;
 
+  // Train-mates of the hovered Thought. Under angle = Train these are the same
+  // bearing; under angle = Topic they scatter, because radius is Attention and
+  // nothing else in the space encodes time.
+  if (hover !== null && P.trainLinks === 'on') {
+    const h = points.find(p2 => p2.i === hover);
+    if (h) {
+      const a = project(h);
+      if (a) {
+        cx.strokeStyle = 'rgba(255,196,107,.55)'; cx.lineWidth = 1;
+        let mates = 0;
+        for (const p2 of points) {
+          if (p2.train !== h.train || p2.i === h.i) continue;
+          const q2 = project(p2); if (!q2) continue;
+          mates++;
+          cx.beginPath(); cx.moveTo(a.sx, a.sy); cx.lineTo(q2.sx, q2.sy); cx.stroke();
+          cx.fillStyle = 'rgba(255,196,107,.9)';
+          cx.beginPath(); cx.arc(q2.sx, q2.sy, 2.4, 0, 7); cx.fill();
+        }
+        cx.fillStyle = 'rgba(255,196,107,.95)';
+        cx.font = '11px ui-sans-serif,system-ui,sans-serif';
+        cx.fillText(`same Train — ${mates} other Thought${mates===1?'':'s'}`, a.sx + 9, a.sy - 13);
+      }
+    }
+  }
+
   // labels: screen-aligned, nearest-first, allowed to overlap. Overlap IS the
   // finding -- Cone Trees' top complaint was label clutter under density.
   const lab = drawn.slice(-P.labels);
@@ -504,14 +539,14 @@ function seg(id, key, cast = v => v) {
   };
 }
 function syncSeg() {
-  for (const [id, key] of [['seg-angle','angleBy'],['seg-dim','dim'],['seg-prof','profile'],['seg-wear','wear'],['seg-spine','spines']])
+  for (const [id, key] of [['seg-angle','angleBy'],['seg-dim','dim'],['seg-prof','profile'],['seg-wear','wear'],['seg-spine','spines'],['seg-links','trainLinks']])
     for (const b of document.getElementById(id).children)
       b.classList.toggle('on', String(P[key]) === b.dataset.v);
   document.getElementById('vname').innerHTML =
     `Angle = ${P.angleBy === 'train' ? 'Train' : 'Topic'} <span>· ${P.dim === 3 ? '3D sphere' : '2D disc'}</span>`;
 }
 seg('seg-angle','angleBy'); seg('seg-dim','dim',Number); seg('seg-prof','profile');
-seg('seg-wear','wear'); seg('seg-spine','spines');
+seg('seg-wear','wear'); seg('seg-spine','spines'); seg('seg-links','trainLinks');
 
 function rng(id, key, label, fmt) {
   const el = document.getElementById(id), out = document.getElementById(label);
