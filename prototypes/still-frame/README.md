@@ -27,7 +27,21 @@ time is the measure because [#2](https://github.com/cjrsmith/thnk/issues/2) foun
 reaction to be anti-signal — users preferred the condition that measurably slowed them.
 
 Right-hand controls sweep `R/r_min`, the Train clustering gap, the attention profile, label
-density, and wear/dust.
+density, wear/dust, and whether Arms are drawn as implied by their Thoughts or as connectors
+running from the Self.
+
+## Two crowding numbers, because they disagree
+
+The HUD reports both, and the gap between them is the point:
+
+- **Typical** — mean spacing among bearings that actually reach the core. An Arm with no
+  attended Thought never comes near the centre, so only the active working set counts.
+- **Minimum** — the closest *pair*, which is what actually collides.
+
+Golden-angle bearings are spread so evenly that a random subset of size `m` keeps the **full**
+set's minimum gap once `m > ~√N`. At the even profile with `angle = Train`, 15 of 125 bearings
+reach the core: typical spacing is a comfortable 5.24 units, minimum is **0.39** — a 13×
+divergence, and the minimum is what you see as overlap.
 
 ## Data provenance — read before trusting any number
 

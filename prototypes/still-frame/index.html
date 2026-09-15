@@ -69,7 +69,9 @@
     <dt>Thoughts</dt><dd id="s-n"></dd>
     <dt>Bearings (arms)</dt><dd id="s-arms"></dd>
     <dt>Longest arm</dt><dd id="s-long"></dd>
-    <dt>Core arc at r_min</dt><dd id="s-arc"></dd>
+    <dt>Bearings at core</dt><dd id="s-act"></dd>
+    <dt>Core arc — typical</dt><dd id="s-typ"></dd>
+    <dt>Core arc — <b style="color:#ffc46b">minimum</b></dt><dd id="s-arc"></dd>
     <dt>Span</dt><dd id="s-span"></dd>
   </dl>
 </div>
@@ -98,6 +100,11 @@
     <button data-v="neglected">Neglected</button>
     <button data-v="even">Even</button>
     <button data-v="close">Held close</button>
+  </div></div>
+
+  <h2>Arms drawn as</h2>
+  <div class="row"><div class="seg" id="seg-spine">
+    <button data-v="implied">Implied</button><button data-v="origin">From the Self</button>
   </div></div>
 
   <h2>Legibility</h2>
@@ -224,13 +231,46 @@ function layout(thoughts, p) {
     arms.push({ a, d, lo, hi, n: mem.length });
   }
 
-  // core arc: angular room between adjacent bearings at r_min
-  const arc = p.dim === 3
-    ? rMin * 2 / Math.sqrt(Math.max(1, count))      // ~solid-angle spacing
-    : rMin * 2 * Math.PI / Math.max(1, count);      // circle spacing
+  // Core crowding has TWO statistics and they diverge badly.
+  //
+  //  typical  -- mean spacing among bearings that actually reach the core.
+  //              An Arm with no attended Thought never comes near the centre,
+  //              so only the active working set contributes. Looks comfortable.
+  //  minimum  -- the closest PAIR, which is what actually collides. Golden-angle
+  //              bearings are spread so evenly that a random subset of size m
+  //              keeps the FULL set's minimum gap once m > ~sqrt(count).
+  //
+  // Legibility fails on the minimum, not the mean, so both are reported.
+  const core = 1.6 * rMin;
+  const active = arms.filter(a => a.lo < core);
+  const nAct = active.length;
+
+  const typical = p.dim === 3
+    ? rMin * 2 / Math.sqrt(Math.max(1, nAct))
+    : rMin * 2 * Math.PI / Math.max(1, nAct);
+
+  let minGap = Infinity;
+  if (nAct > 1) {
+    if (p.dim === 2) {
+      const a = active.map(x => ((GOLDEN * x.a) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI))
+                      .sort((u, v) => u - v);
+      for (let i = 0; i < a.length; i++) {
+        const g = i ? a[i] - a[i-1] : a[0] + 2*Math.PI - a[a.length-1];
+        if (g < minGap) minGap = g;
+      }
+    } else {
+      for (let i = 0; i < active.length; i++)
+        for (let j = i + 1; j < active.length; j++) {
+          const u = active[i].d, v = active[j].d;
+          const d = Math.acos(Math.max(-1, Math.min(1, u[0]*v[0] + u[1]*v[1] + u[2]*v[2])));
+          if (d < minGap) minGap = d;
+        }
+    }
+    minGap *= rMin;
+  }
   const longest = arms.reduce((m, x) => Math.max(m, x.n), 0);
 
-  return { points, arms, stats: { count, arc, longest, R, rMin } };
+  return { points, arms, stats: { count, nAct, typical, minGap, longest, R, rMin } };
 }
 
 /* ------------------------- throwaway shell below --------------------------- */
@@ -241,7 +281,7 @@ const TCOL = new Map(TOPICS.map((t, i) => {
   return [t, { h, css: `hsl(${h} 72% 62%)` }];
 }));
 
-const P = { angleBy:'train', dim:3, rMinRatio:8, gapHours:4, profile:'even', labels:26, wear:'off' };
+const P = { angleBy:'train', dim:3, rMinRatio:8, gapHours:4, profile:'even', labels:26, wear:'off', spines:'implied' };
 const VARIANTS = [
   { angleBy:'train', dim:3, name:'Angle = Train',  sub:'3D sphere' },
   { angleBy:'topic', dim:3, name:'Angle = Topic',  sub:'3D sphere' },
@@ -279,9 +319,13 @@ function build() {
   document.getElementById('s-n').textContent = frame.points.length;
   document.getElementById('s-arms').textContent = s.count;
   document.getElementById('s-long').textContent = s.longest + ' thoughts';
+  document.getElementById('s-act').textContent = s.nAct + ' of ' + s.count;
+  document.getElementById('s-typ').textContent =
+    isFinite(s.typical) ? s.typical.toFixed(1) + ' units' : '—';
   const arcEl = document.getElementById('s-arc');
-  arcEl.textContent = s.arc.toFixed(1) + ' units';
-  arcEl.style.color = s.arc < 2.2 ? 'var(--bad)' : s.arc < 4.5 ? '#ffc46b' : 'var(--good)';
+  arcEl.textContent = isFinite(s.minGap) ? s.minGap.toFixed(2) + ' units' : '—';
+  arcEl.style.color = !isFinite(s.minGap) ? 'var(--dim)'
+    : s.minGap < 4 ? 'var(--bad)' : s.minGap < 8 ? '#ffc46b' : 'var(--good)';
   document.getElementById('s-span').textContent = META.span_days + ' days';
   draw();
 }
@@ -306,7 +350,8 @@ function draw() {
   // arm spines
   cx.lineWidth = 1;
   for (const arm of arms) {
-    const a = project({ x:arm.d[0]*arm.lo, y:arm.d[1]*arm.lo, z:arm.d[2]*arm.lo });
+    const from = P.spines === 'origin' ? stats.rMin : arm.lo;
+    const a = project({ x:arm.d[0]*from, y:arm.d[1]*from, z:arm.d[2]*from });
     const b = project({ x:arm.d[0]*arm.hi, y:arm.d[1]*arm.hi, z:arm.d[2]*arm.hi });
     if (!a || !b) continue;
     cx.strokeStyle = 'rgba(120,140,180,.17)';
@@ -459,13 +504,14 @@ function seg(id, key, cast = v => v) {
   };
 }
 function syncSeg() {
-  for (const [id, key] of [['seg-angle','angleBy'],['seg-dim','dim'],['seg-prof','profile'],['seg-wear','wear']])
+  for (const [id, key] of [['seg-angle','angleBy'],['seg-dim','dim'],['seg-prof','profile'],['seg-wear','wear'],['seg-spine','spines']])
     for (const b of document.getElementById(id).children)
       b.classList.toggle('on', String(P[key]) === b.dataset.v);
   document.getElementById('vname').innerHTML =
     `Angle = ${P.angleBy === 'train' ? 'Train' : 'Topic'} <span>· ${P.dim === 3 ? '3D sphere' : '2D disc'}</span>`;
 }
-seg('seg-angle','angleBy'); seg('seg-dim','dim',Number); seg('seg-prof','profile'); seg('seg-wear','wear');
+seg('seg-angle','angleBy'); seg('seg-dim','dim',Number); seg('seg-prof','profile');
+seg('seg-wear','wear'); seg('seg-spine','spines');
 
 function rng(id, key, label, fmt) {
   const el = document.getElementById(id), out = document.getElementById(label);
