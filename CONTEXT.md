@@ -44,6 +44,12 @@ in one Train may be about entirely different things. A Thought belongs to at mos
 or to none until it is triaged.
 _Avoid_: Session, thread, stream, burst, arm
 
+**Origin**:
+How a Thought came to exist — typed at capture, imported from elsewhere, returned by an agent.
+Recorded once and never rewritten: restoring a backup preserves each Thought's original Origin
+rather than stamping the whole batch as an import.
+_Avoid_: Source, provenance, created-by, import
+
 **Triage**:
 Assigning a floating Thought to a Train of Thought, or starting a new one for it. Done by
 hand at first, AI-assisted later.
@@ -74,8 +80,9 @@ neglected and then lingers in the Deep rather than vanishing.
 _Avoid_: Decay, aging, sinking, expiry
 
 **Attention**:
-The accumulated weight of every Interaction with a Thought, each one fading over time. It is
-what holds a Thought near the Self, and it is the only thing that does. Rendered as glow: the
+The accumulated weight of every Interaction, each one fading over time — a Thought's own, and
+that of the Arm it sits on, since an Arm moves as one and is held by its most attended Thought.
+It is what holds a Thought near the Self, and it is the only thing that does. Rendered as glow: the
 most attended Thoughts burn brightest and the Deep is cold. In the Mind Space glow is
 redundant with nearness and reinforces it; in a Frame, which has no Self and no distance, glow
 is the only sign of Attention there is.
@@ -89,9 +96,10 @@ moment in it.
 _Avoid_: Coordinates, location, placement (which means something else)
 
 **Arm**:
-The visible shape a Train of Thought makes in the Mind Space — its Thoughts in sequence at
-the Train's own bearing. An Arm moves as one: the whole Train is held by its most attended
-Thought, so returning to any one Thought brings its whole context back.
+The visible shape a grouping makes in the Mind Space — its Thoughts strung along one shared
+bearing. An Arm moves as one, held by its most attended Thought, so returning to any one Thought
+brings the rest of it back. *Which* grouping owns the bearing — Train of Thought or Topic — is
+the open question in [#15](https://github.com/cjrsmith/thnk/issues/15).
 _Avoid_: Spiral, branch, spoke, cluster
 
 ### Time and attention
